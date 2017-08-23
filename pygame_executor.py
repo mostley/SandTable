@@ -1,5 +1,5 @@
 """ visualizes movements with pygame """
-import pygame, math
+import pygame, math, random
 
 
 class PygameExecutor:
@@ -7,21 +7,36 @@ class PygameExecutor:
 
     def __init__(self):
         self.screen = None
-        self.lines = []
+        self.current_line = None
         self.diameter = 800
         self.center_point = (self.diameter/2, self.diameter/2)
         self.current_angle = 0
         self.current_slider_pos = 0
         self.current_pos = (0, 0)
-        self.rotation_speed = 5
-        self.slider_speed = 5
+        self.rotation_speed = 0.1
         self.error = None
         self.fatal = None
+        self.color = self.random_color()
+
+        print("color: " + str(self.color[0]) + ":" + str(self.color[1]) + ":" + str(self.color[2]))
+
+    def random_color(self):
+        """ generates a random color """
+        return (
+            int(math.floor(random.random() * 255)),
+            int(math.floor(random.random() * 255)),
+            int(math.floor(random.random() * 255))
+        )
+
+    def reset(self):
+        """ sets a new color """
+        self.color = self.random_color()
 
     def setup(self):
         """ sets up the executor """
         pygame.init()
         self.screen = pygame.display.set_mode((self.diameter, self.diameter))
+        self.screen.fill((0, 0, 0))
 
     def calculate_cartesian(self):
         """ calculates the cartesian coordinates from polar coordinates """
@@ -32,8 +47,8 @@ class PygameExecutor:
 
     def add_movement(self, movement):
         """ adds the movement to the current position """
-        self.current_slider_pos += movement.distance_delta * self.rotation_speed
-        self.current_angle += movement.angle_delta * self.slider_speed
+        self.current_slider_pos += movement.distance_delta * self.diameter/2.0
+        self.current_angle += movement.angle_delta * 360
 
     def execute(self, movement):
         """ executes the movement and updates the visualization """
@@ -42,19 +57,20 @@ class PygameExecutor:
         self.add_movement(movement)
         new_pos = self.calculate_cartesian()
 
-        line = (current_pos, new_pos)
-        self.lines.append(line)
+        self.current_line = (current_pos, new_pos)
+        
         self.update()
+
+        return (self.current_angle, self.current_slider_pos)
 
     def drawLine(self, line):
         """ draws a line """
-        pygame.draw.line(self.screen, (255,255,255), line[0], line[1], 1)
+        pygame.draw.line(self.screen, self.color, line[0], line[1], 1)
 
     def update(self):
-        """ redraws the screen """
-        self.screen.fill((0, 0, 0))
-        for line in self.lines:
-            self.drawLine(line)
+        """ updates the screen """
+        
+        self.drawLine(self.current_line)
         pygame.display.flip()
 
         for event in pygame.event.get():

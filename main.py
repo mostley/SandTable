@@ -2,6 +2,7 @@
 Main class
 """
 from pygame_executor import PygameExecutor
+import random, math
 
 class Movement:
     """ represents a movement """
@@ -22,12 +23,16 @@ class TestModule:
     """ a test module """
 
     def __init__(self):
-        self.length = 10
+        self.length = 600
         self.name = "Test Module"
 
-    def tick(self, i):
+    def tick(self, i, pos):
         """ execute a single tick, returns a Movement """
-        return Movement((i % 5) / 5.0, (i % 20 - 10) / 10.0 + i/self.length)
+        print("tick " + str(i))
+        if i < self.length/2:
+            return Movement(0.001, 0.001)
+        else:
+            return Movement(-360.0/self.length, math.sin(i)/40)
 
 
 class Main:
@@ -39,6 +44,7 @@ class Main:
         self.running = False
         self.modules = []
         self.current_module = None
+        self.current_pos = None
         self.executor = PygameExecutor()
 
     def add_module(self, module):
@@ -47,7 +53,7 @@ class Main:
 
     def get_next_module(self):
         """ returns a random next module """
-        return self.modules[0] # TODO
+        return self.modules[random.choice(range(len(self.modules)))]
 
     def execute_module(self):
         """ execute a module """
@@ -55,8 +61,8 @@ class Main:
         print("Execute Module '" + self.current_module.name + "'")
 
         for i in range(self.current_module.length):
-            movement = self.current_module.tick(i)
-            self.executor.execute(movement)
+            movement = self.current_module.tick(i, self.current_pos)
+            self.current_pos = self.executor.execute(movement)
 
             if self.executor.error:
                 print("[ERROR] Encountered error, stopping execution of module '" + self.executor.fatal + "'")
@@ -66,6 +72,8 @@ class Main:
                 print("[FATAL] Encountered fatal error, stopping execution of sandtable '" + self.executor.fatal + "'")
                 self.running = False
                 break
+        
+        self.current_module = None
 
     def run(self):
         """ starts the execution """
@@ -80,6 +88,7 @@ class Main:
         while self.running:
             if not self.current_module:
                 self.current_module = self.get_next_module()
+                self.executor.reset()
 
             self.execute_module()
 
@@ -88,5 +97,6 @@ class Main:
 if __name__ == '__main__':
     print("Starting Sandtable")
     MAIN = Main()
-    MAIN.add_module(TestModule())
+    for i in range(10):
+        MAIN.add_module(TestModule())
     MAIN.run()
