@@ -1,0 +1,92 @@
+"""
+Main class
+"""
+from pygame_executor import PygameExecutor
+
+class Movement:
+    """ represents a movement """
+
+    def __init__(self, angle_delta, distance_delta):
+        self.angle_delta = self.clamp(angle_delta)
+        self.distance_delta = self.clamp(distance_delta)
+
+    def clamp(self, value):
+        """ clamps a value in between -1 and 1 """
+        return max(-1, min(value, 1))
+
+    def __str__(self):
+        return "[" + str(self.angle_delta) + ":" + str(self.distance_delta) + "]"
+
+
+class TestModule:
+    """ a test module """
+
+    def __init__(self):
+        self.length = 10
+        self.name = "Test Module"
+
+    def tick(self, i):
+        """ execute a single tick, returns a Movement """
+        return Movement((i % 5) / 5.0, (i % 20 - 10) / 10.0 + i/self.length)
+
+
+class Main:
+    """
+    Handles sand modules
+    """
+
+    def __init__(self):
+        self.running = False
+        self.modules = []
+        self.current_module = None
+        self.executor = PygameExecutor()
+
+    def add_module(self, module):
+        """ add a module to execution """
+        self.modules.append(module)
+
+    def get_next_module(self):
+        """ returns a random next module """
+        return self.modules[0] # TODO
+
+    def execute_module(self):
+        """ execute a module """
+
+        print("Execute Module '" + self.current_module.name + "'")
+
+        for i in range(self.current_module.length):
+            movement = self.current_module.tick(i)
+            self.executor.execute(movement)
+
+            if self.executor.error:
+                print("[ERROR] Encountered error, stopping execution of module '" + self.executor.fatal + "'")
+                break
+
+            if self.executor.fatal:
+                print("[FATAL] Encountered fatal error, stopping execution of sandtable '" + self.executor.fatal + "'")
+                self.running = False
+                break
+
+    def run(self):
+        """ starts the execution """
+        if len(self.modules) <= 0:
+            print("No modules loaded!")
+            return
+
+        self.running = True
+
+        self.executor.setup()
+
+        while self.running:
+            if not self.current_module:
+                self.current_module = self.get_next_module()
+
+            self.execute_module()
+
+
+
+if __name__ == '__main__':
+    print("Starting Sandtable")
+    MAIN = Main()
+    MAIN.add_module(TestModule())
+    MAIN.run()
