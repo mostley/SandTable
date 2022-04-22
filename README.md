@@ -1,2 +1,2 @@
 # SandTable
-SandTable controll and simulation code
+SandTable control and simulation code
